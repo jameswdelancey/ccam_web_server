@@ -221,6 +221,9 @@ def main(argv):
     # cli entrypoint argument parser, routes to the
     # right entrypoint
     if len(argv) < 2:
+        logging.error("arguments not parsable")
+        logging.info(HELP)
+    elif argv[1] == "run_ccam_web_server":
         EntryPoints.run_ccam_web_server(argv)
     elif argv[1] == "run_ccam_ftp_server":
         EntryPoints.run_ccam_ftp_server(argv)
