@@ -4,6 +4,9 @@ import queue
 import re
 import sys
 from bottle import redirect, request, route, run
+from pyftpdlib.authorizers import DummyAuthorizer
+from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.servers import FTPServer
 
 logging.basicConfig(level="INFO")
 
@@ -55,7 +58,7 @@ by_day = {}
 by_hour = {}
 by_minute = {}
 by_cam_no = {}
-_files=[]
+_files = []
 
 
 def get_file_data():
@@ -93,7 +96,7 @@ def files(qs, title, bodylines):
     page_length = 100
     showable = _files
     if re.search("page=\d+", qs):
-        page_start = int( re.search("page=(\d+)", qs).group(1)) * page_length
+        page_start = int(re.search("page=(\d+)", qs).group(1)) * page_length
     if re.search("year=\d+", qs):
         _year = re.search("year=(\d+)", qs).group(1)
         showable = list(set(showable).intersection(set(by_year.get(_year, []))))
@@ -114,8 +117,8 @@ def files(qs, title, bodylines):
         showable = list(set(showable).intersection(set(by_cam_no.get(_cam_no, []))))
     print("len of showable", len(showable))
     _tmp = (TABLE_ROW_TEMPLATE % TABLE_HEADER_CELL_TEMPLATE % "filename") + "".join(
-
-        TABLE_ROW_TEMPLATE % TABLE_BODY_CELL_TEMPLATE % x for x in showable[page_start:page_start+page_length]
+        TABLE_ROW_TEMPLATE % TABLE_BODY_CELL_TEMPLATE % x
+        for x in showable[page_start : page_start + page_length]
     )
 
     bodylines.append(TABLE_TEMPLATE % _tmp)
@@ -168,6 +171,44 @@ class EntryPoints:
             server="paste",
         )
 
+    @staticmethod
+    def run_ccam_ftp_server(argv):
+        # Instantiate a dummy authorizer for managing 'virtual' users
+        authorizer = DummyAuthorizer()
+
+        # Define a new user having full r/w permissions and a read-only
+        # anonymous user
+        authorizer.add_user(
+            "pi",
+            "12345",
+            os.environ.get("CCAM_WEB_SERVER_DATA_DIR", os.getcwd()),
+            perm="elradfmwMT",
+        )
+        # authorizer.add_anonymous(os.environ.get("CCAM_WEB_SERVER_DATA_DIR", os.getcwd()))
+
+        # Instantiate FTP handler class
+        handler = FTPHandler
+        handler.authorizer = authorizer
+
+        # Define a customized banner (string returned when client connects)
+        handler.banner = "pyftpdlib based ftpd ready."
+
+        # Specify a masquerade address and the range of ports to use for
+        # passive connections.  Decomment in case you're behind a NAT.
+        # handler.masquerade_address = '151.25.42.11'
+        handler.passive_ports = range(60000, 65535)
+
+        # Instantiate FTP server class and listen on 0.0.0.0:2121
+        address = ("", 2121)
+        server = FTPServer(address, handler)
+
+        # set a limit for connections
+        server.max_cons = 256
+        server.max_cons_per_ip = 5
+
+        # start ftp server
+        server.serve_forever()
+
 
 HELP = """
 stock backtesting script
@@ -181,9 +222,12 @@ def main(argv):
     # right entrypoint
     if len(argv) < 2:
         EntryPoints.run_ccam_web_server(argv)
+    elif argv[1] == "run_ccam_ftp_server":
+        EntryPoints.run_ccam_ftp_server(argv)
     else:
         logging.error("arguments not parsable")
         logging.info(HELP)
+
 
 
 if __name__ == "__main__":

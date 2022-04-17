@@ -9,6 +9,7 @@ license = "MIT"
 python = "^3.9"
 bottle = "^0.12.19"
 Paste = "^3.5.0"
+pyftpdlib = "^1.5.6"
 
 [tool.poetry.dev-dependencies]
 black = "^22.3.0"
