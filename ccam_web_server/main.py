@@ -3,12 +3,18 @@ import os
 import queue
 import re
 import sys
+# import pyinotify
+# import sqlite3
 from bottle import redirect, request, route, run
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 logging.basicConfig(level="INFO")
+
+SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+DATA_DIR = os.environ.get("CCAM_WEB_SERVER_DATA_DIR", SCRIPT_DIR + "/data")
+db = sqlite3.connect(DATA_DIR + "/db.sqlite3")
 
 
 threads = []
@@ -91,30 +97,41 @@ def files(qs, title, bodylines):
     bodylines.append("query string is: %s" % repr(qs))
 
     # {"2022"}
-    get_file_data()
+    get_file_data()  # comment this for db
     page_start = 0
     page_length = 100
     showable = _files
+#     _selects = []
     if re.search("page=\d+", qs):
         page_start = int(re.search("page=(\d+)", qs).group(1)) * page_length
     if re.search("year=\d+", qs):
         _year = re.search("year=(\d+)", qs).group(1)
+#         _selects.append("year=%d"%int(_year))
         showable = list(set(showable).intersection(set(by_year.get(_year, []))))
     if re.search("month=\d+", qs):
         _month = re.search("month=(\d+)", qs).group(1)
+#         _selects.append("month=%d"%int(_month))
         showable = list(set(showable).intersection(set(by_month.get(_month, []))))
     if re.search("day=\d+", qs):
         _day = re.search("day=(\d+)", qs).group(1)
+#         _selects.append("day=%d"%int(_day))
         showable = list(set(showable).intersection(set(by_day.get(_day, []))))
     if re.search("hour=\d+", qs):
         _hour = re.search("hour=(\d+)", qs).group(1)
+#         _selects.append("hour=%d"%int(_hour))
         showable = list(set(showable).intersection(set(by_hour.get(_hour, []))))
     if re.search("minute=\d+", qs):
         _minute = re.search("minute=(\d+)", qs).group(1)
+#         _selects.append("minute=%d"%int(_minute))
         showable = list(set(showable).intersection(set(by_minute.get(_minute, []))))
     if re.search("cam_no=\d+", qs):
         _cam_no = re.search("cam_no=(\d+)", qs).group(1)
+#         _selects.append("cam_no='%s'"%_cam_no)
         showable = list(set(showable).intersection(set(by_cam_no.get(_cam_no, []))))
+#     _where = "where %s"%" AND ".join(_selects) if _selects else ""
+#     _limit = page_length
+#     _offset = page_start
+#     _results = db.exeucte("select file from files %s limit %d offset %d"%(_where, _limit, _offset).fetchall()
     print("len of showable", len(showable))
     _tmp = (TABLE_ROW_TEMPLATE % TABLE_HEADER_CELL_TEMPLATE % "filename") + "".join(
         TABLE_ROW_TEMPLATE % TABLE_BODY_CELL_TEMPLATE % x
@@ -208,6 +225,34 @@ class EntryPoints:
 
         # start ftp server
         server.serve_forever()
+
+#     @staticmethod
+#     def run_ccam_inotify(argv):
+        
+#         class EventHandler(pyinotify.ProcessEvent):
+#             def process_IN_CREATE(self, event):
+#                 try:
+#                     created_at = datetime.datetime.now().isoformat()
+#                     file = event.name
+#                     _filename_time, cam_no = file.replace("_film.mov", "").split("_")
+#                     year, month, day, hour, minute, second = _filename_time.split("-")
+
+#                     db.execute(('insert into files (created_at, file, year, month, day, hour, minute, second, '
+#  "cam_no) values ('%s', ?, ?, ?, ?, ?, ?, ?, ?)") % created_at, (file, year, month, day, hour, minute, second, cam_no))
+#                     db.commit()
+#                 except Exception as e:
+#                     logging.exception("error in process_in_create with error %s", repr(e))
+                
+#         wm = pyinotify.WatchManager()  # Watch Manager
+#         mask = pyinotify.IN_CREATE  # watched events
+#         handler = EventHandler()
+#         notifier = pyinotify.Notifier(wm, handler)
+#         wdd = wm.add_watch(os.environ.get("CCAM_WEB_SERVER_DATA_DIR"), mask, rec=True)
+#         notifier.loop()
+
+#     @staticmethod
+#     def run_ccam_data_cleaner(argv):
+#         ...
 
 
 HELP = """
