@@ -15,7 +15,31 @@ logging.basicConfig(level="INFO")
 # SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 # DATA_DIR = os.environ.get("CCAM_WEB_SERVER_DATA_DIR", SCRIPT_DIR + "/data")
 # db = sqlite3.connect(DATA_DIR + "/db.sqlite3")
+# DATABASE_SCHEMA = [
+#     "PRAGMA foreign_keys=OFF;",
+#     "BEGIN TRANSACTION;",
+#     "CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, created_at, file, year INTEGER, month INTEGER, day INTEGER, hour INTEGER, minute INTEGER, second INTEGER, cam_no)",
+#     "CREATE INDEX IF NOT EXISTS idx_files_year on files(year);",
+#     "CREATE INDEX IF NOT EXISTS idx_files_month on files(month);",
+#     "CREATE INDEX IF NOT EXISTS idx_files_day on files(day);",
+#     "CREATE INDEX IF NOT EXISTS idx_files_hour on files(hour);",
+#     "CREATE INDEX IF NOT EXISTS idx_files_minute on files(minute);",
+#     "CREATE INDEX IF NOT EXISTS idx_files_second on files(second);",
+#     "CREATE INDEX IF NOT EXISTS idx_files_cam_no on files(cam_no);",
+#     "PRAGMA foreign_keys=ON;",
+#     "COMMIT;",
+# ]
 
+
+# [db.execute(x) for x in DATABASE_SCHEMA]
+# COMMANDS = [
+#     # "PRAGMA cache_size=256000;",  # 0.25GB in RAM
+#     "PRAGMA synchronous=OFF;",
+#     "PRAGMA count_changes=OFF;",
+#     "PRAGMA temp_store=MEMORY;",
+# ]
+# for cmd in COMMANDS:
+#     db.execute(cmd)
 
 threads = []
 thread_stop = []
