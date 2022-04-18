@@ -12,9 +12,9 @@ from pyftpdlib.servers import FTPServer
 
 logging.basicConfig(level="INFO")
 
-SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_DIR = os.environ.get("CCAM_WEB_SERVER_DATA_DIR", SCRIPT_DIR + "/data")
-db = sqlite3.connect(DATA_DIR + "/db.sqlite3")
+# SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
+# DATA_DIR = os.environ.get("CCAM_WEB_SERVER_DATA_DIR", SCRIPT_DIR + "/data")
+# db = sqlite3.connect(DATA_DIR + "/db.sqlite3")
 
 
 threads = []
